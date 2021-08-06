@@ -26,7 +26,7 @@ namespace Droneboi_Server
 
 			if (checkId != id)
 			{
-				Console.WriteLine($"TcpServer[{id.ToString()}]: Hey, you gave wrong id ({checkId.ToString()}), be careful");
+				Debug.Log($"TcpServer[{id.ToString()}]: Hey, you gave wrong id ({checkId.ToString()}), be careful");
 			}
 			if (premium)
             {

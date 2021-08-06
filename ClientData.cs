@@ -60,7 +60,7 @@ namespace Droneboi_Server
 				{
 					stream = socket.GetStream();
 					receivedData = new Packet();
-					Console.WriteLine("TcpClient[" + id.ToString() + "]: Connected succesfully");
+					Debug.Log("TcpClient[" + id.ToString() + "]: Connected succesfully");
 					stream.BeginRead(receiveBuffer, 0, Server.dataBufferSize, ReceiveCallback, null);
 				}
 			}
@@ -71,8 +71,8 @@ namespace Droneboi_Server
 				if (socket != null)
 				{
 					stream.BeginWrite(packet.ToArray(), 0, packet.Length(), null, null);
-					Console.WriteLine($"TcpClient[{id.ToString()}] ({ClientData.clients[id].username}): Sent message");
-					Console.WriteLine(socket.Client.LocalEndPoint.ToString() + " --> " + socket.Client.RemoteEndPoint.ToString());
+					Debug.Log($"TcpClient[{id.ToString()}] ({ClientData.clients[id].username}): Sent message");
+					Debug.Log(socket.Client.LocalEndPoint.ToString() + " --> " + socket.Client.RemoteEndPoint.ToString());
 				}
 				/*}
 				catch (Exception arg)
@@ -85,22 +85,22 @@ namespace Droneboi_Server
 			{
 				//try {
 				int num = stream.EndRead(result);
-				Console.WriteLine("TcpClient[" + id.ToString() + "]: Got new message");
+				Debug.Log("TcpClient[" + id.ToString() + "]: Got new message");
 				if (num <= 0)
 				{
-					Console.WriteLine("TcpClient[" + id.ToString() + "]: I should disconnect");
+					Debug.Log("TcpClient[" + id.ToString() + "]: I should disconnect");
 					//instance.Disconnect();
 					return;
 				}
 				byte[] array = new byte[num];
 				Array.Copy(receiveBuffer, array, num);
-				Console.WriteLine("TcpClient[" + id.ToString() + "]: " + Encoding.UTF8.GetString(array));
+				Debug.Log("TcpClient[" + id.ToString() + "]: " + Encoding.UTF8.GetString(array));
 				receivedData.Reset(HandleData(array));
 				stream.BeginRead(receiveBuffer, 0, Server.dataBufferSize, ReceiveCallback, null);
 				/*}
 				catch (Exception arg)
 				{
-					Console.WriteLine($"Error receiving TCP data: {arg}");
+					Debug.Log($"Error receiving TCP data: {arg}");
 					Disconnect();
 				}*/
 			}

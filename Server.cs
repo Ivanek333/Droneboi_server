@@ -62,7 +62,7 @@ namespace Droneboi_Server
 			{
 				listener = new TcpListener(Server.instance.localPoint);
 				listener.Start();
-				Console.WriteLine("TcpListener is running, waiting for connection...");
+				Debug.Log("TcpListener is running, waiting for connection...");
 				listener.BeginAcceptTcpClient(AcceptCallback, listener);
 			}
 
@@ -70,8 +70,8 @@ namespace Droneboi_Server
 			{
 				TcpClient client = listener.EndAcceptTcpClient(result);
 				listener.BeginAcceptTcpClient(AcceptCallback, listener);
-				Console.WriteLine(DateTime.Now.ToLongTimeString() + " - " + client.Client.RemoteEndPoint.ToString() + " connected");
-				Console.WriteLine("TcpListener: I think it's a new player");
+				Debug.Log(DateTime.Now.ToLongTimeString() + " - " + client.Client.RemoteEndPoint.ToString() + " connected");
+				Debug.Log("TcpListener: I think it's a new player");
 				int id = ClientData.clients.Count;
 				ClientData.clients.Add(new ClientData
 				{
@@ -79,11 +79,11 @@ namespace Droneboi_Server
 					IPpoint = ((IPEndPoint)client.Client.RemoteEndPoint),
 					tcp = new ClientData.TCP(id)
 				});
-				Console.WriteLine("TcpListener: New player was added with id " + id.ToString());
+				Debug.Log("TcpListener: New player was added with id " + id.ToString());
 				ClientData.clients[id].tcp.Connect(client);
 				ServerSend.SendWelcome(id);
 				Thread.Sleep(1000);
-				Console.WriteLine("TcpListener: sent welcome to player");
+				Debug.Log("TcpListener: sent welcome to player");
 			}
 		}
 
@@ -96,7 +96,7 @@ namespace Droneboi_Server
 			{
 				localPoint = new IPEndPoint(IPAddress.Any, 0);
 				socket = new UdpClient(Server.instance.localPort);
-				Console.WriteLine("UdpListener is running, waiting for connection...");
+				Debug.Log("UdpListener is running, waiting for connection...");
 				socket.BeginReceive(new AsyncCallback(this.ReceiveCallback), null);
 			}
 
@@ -110,28 +110,27 @@ namespace Droneboi_Server
 				}
 				/*catch (Exception arg)
 				{
-					Console.WriteLine(arg.ToString());
-					//Debug.Log(string.Format("Error sending data to server via UDP: {0}", arg));
+					Debug.Log(string.Format("Error sending data to server via UDP: {0}", arg));
 				}*/
 			}
 			private void ReceiveCallback(IAsyncResult result)
 			{
 				//try {
 
-				Console.WriteLine("UdpListener: new connection from");
+				Debug.Log("UdpListener: new connection from");
 				IPEndPoint point = new IPEndPoint(IPAddress.Any, 0);
 				byte[] array = socket.EndReceive(result, ref point);
-				Console.WriteLine("UdpListener: new connection from");
-				Console.WriteLine(point.ToString());
+				Debug.Log("UdpListener: new connection from");
+				Debug.Log(point.ToString());
 				socket.BeginReceive(new AsyncCallback(ReceiveCallback), null);
 				if (array.Length < 4)
 				{
-					Console.WriteLine("UdpListener: i should disconnect");
+					Debug.Log("UdpListener: i should disconnect");
 					//Server.instance.Disconnect(false);
 				}
 				else
 				{
-					Console.WriteLine("UdpListener: new message");
+					Debug.Log("UdpListener: new message");
 					HandleData(array);
 				}
 
