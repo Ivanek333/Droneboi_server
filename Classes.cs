@@ -4,6 +4,14 @@ using System.Text;
 
 namespace Droneboi_Server
 {
+    public enum Team
+    {
+        Green,
+        Red,
+        Blue,
+        Yellow,
+        None
+    }
     public struct Vector3
     {
         public float x;

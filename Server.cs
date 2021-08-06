@@ -77,7 +77,8 @@ namespace Droneboi_Server
 				{
 					id = id,
 					IPpoint = ((IPEndPoint)client.Client.RemoteEndPoint),
-					tcp = new ClientData.TCP(id)
+					tcp = new ClientData.TCP(id),
+					team = Team.None
 				});
 				Debug.Log("TcpListener: New player was added with id " + id.ToString());
 				ClientData.clients[id].tcp.Connect(client);

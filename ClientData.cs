@@ -32,13 +32,13 @@ namespace Droneboi_Server
 		public IPEndPoint IPpoint;
 		public bool premium;
 		public TCP tcp;
+		public Team team;
 
 		public void SendTCP(Packet packet)
 		{
 			packet.WriteLength();
 			tcp.SendData(packet);
 		}
-
 		public class TCP
 		{
 			public TCP(int _id)
@@ -72,7 +72,6 @@ namespace Droneboi_Server
 				{
 					stream.BeginWrite(packet.ToArray(), 0, packet.Length(), null, null);
 					Debug.Log($"TcpClient[{id.ToString()}] ({ClientData.clients[id].username}): Sent message");
-					Debug.Log(socket.Client.LocalEndPoint.ToString() + " --> " + socket.Client.RemoteEndPoint.ToString());
 				}
 				/*}
 				catch (Exception arg)

@@ -28,10 +28,6 @@ namespace Droneboi_Server
 			{
 				Debug.Log($"TcpServer[{id.ToString()}]: Hey, you gave wrong id ({checkId.ToString()}), be careful");
 			}
-			if (premium)
-            {
-				username = "[cool guy] " + username;
-            }
 			client.userId = userId;
 			client.username = username;
 			client.premium = premium;
@@ -48,8 +44,41 @@ namespace Droneboi_Server
 		}
 		public static void ReceiveMessage(int id, Packet packet)
 		{
+			ClientData client = ClientData.clients[ClientData.FindById(id)];
 			string message = packet.ReadString();
-			ServerSend.SendMessage(id, ClientData.clients[ClientData.FindById(id)].username + " : " + message);
+			if (message.StartsWith("/"))
+            {
+				message = message.Remove(0, 1);
+				string command = message.Split(' ')[0];
+				message = message.Remove(0, command.Length).Trim();
+				if (command == "team")
+                {
+					switch(message.ToLower())
+					{
+						case "green":
+							client.team = Team.Green;
+							break;
+						case "red":
+							client.team = Team.Red;
+							break;
+						case "blue":
+							client.team = Team.Blue;
+							break;
+						case "yellow":
+							client.team = Team.Yellow;
+							break;
+						default:
+							ServerSend.SendServerMessage(id, "wrong team");
+							break;
+					}
+                }
+                else
+                {
+					ServerSend.SendServerMessage(id, "wrong command");
+                }
+            }
+			else
+				ServerSend.SendMessage(id, client.username + " : " + message);
 		}
 	}
 }
