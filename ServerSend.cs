@@ -27,15 +27,15 @@ namespace Droneboi_Server
 		/*
         1 - ClientHandle.Welcome
 		2 - ClientHandle.InitPlayer
-	    3 - ClientHandle.RemovePlayer
-	    4 - ClientHandle.Kick
-	    5 - ClientHandle.SpawnAVehicle
-	    6 - ClientHandle.RemoveAVehicle
-	    7 - ClientHandle.UpdateAVehicle
-	    8 - ClientHandle.FireAVehicleWeapon
+	    *3 - ClientHandle.RemovePlayer
+	    *4 - ClientHandle.Kick
+	    *5 - ClientHandle.SpawnAVehicle
+	    *6 - ClientHandle.RemoveAVehicle
+	    *7 - ClientHandle.UpdateAVehicle
+	    *8 - ClientHandle.FireAVehicleWeapon
 	    9 - ClientHandle.ReceiveChat
         */
-		public static void SendWelcome(int id)
+		public static void SendWelcome(int id) //1
 		{
 			using (Packet sendPacket = new Packet(1))
 			{
@@ -50,7 +50,7 @@ namespace Droneboi_Server
 			}
 		}
 
-		public static void SendInitPlayer(int id)
+		public static void SendInitPlayer(int id) //2
 		{
 			ClientData newClient = ClientData.clients[ClientData.FindById(id)];
 			foreach (ClientData client in ClientData.clients)
@@ -80,7 +80,7 @@ namespace Droneboi_Server
 				}
 			}
 		}
-		public static void SendMessage(int fromId, string rawmessage)
+		public static void SendMessage(int fromId, string rawmessage) //9
 		{
 			ClientData fromClient = ClientData.clients[ClientData.FindById(fromId)];
 			string message = rawmessage;

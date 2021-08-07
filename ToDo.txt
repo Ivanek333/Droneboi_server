@@ -1,0 +1,18 @@
+﻿1. Disconnect clients
+	1.1 Tcp disconnection
+	1.2 Removing clients from array
+	1.3 Sending other clients info about disconnect
+2. Kick & ban system
+	2.1 Kicks
+	2.2 Ban list
+	2.3 Kick & ban from console
+3. Spawning & updating vehicles
+	3.1 Setting up udp staff
+	3.2 Add some classes
+	3.3 Spawning vehicles
+	3.4 Updating vehicles
+4. Firing weapons
+5. Anticheat system
+	5.1 50m from spawn
+	5.2 Fuel & enegry check
+	5.3 Speed limit

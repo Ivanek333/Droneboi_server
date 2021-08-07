@@ -91,29 +91,32 @@ namespace Droneboi_Server
 		public class UDP
 		{
 			public UdpClient socket;
-			public IPEndPoint localPoint;
 
 			public void Listen()
 			{
-				localPoint = new IPEndPoint(IPAddress.Any, 0);
 				socket = new UdpClient(Server.instance.localPort);
 				Debug.Log("UdpListener is running, waiting for connection...");
 				socket.BeginReceive(new AsyncCallback(this.ReceiveCallback), null);
 			}
 
-			public void SendData(Packet packet)
+			public void SendData(Packet packet, IPEndPoint point)
 			{
 				//try
 				//{
 				if (socket != null)
 				{
-					socket.BeginSend(packet.ToArray(), packet.Length(), null, null);
+					socket.Connect(point);
+					socket.BeginSend(packet.ToArray(), packet.Length(), EndSend, null);
 				}
 				/*catch (Exception arg)
 				{
 					Debug.Log(string.Format("Error sending data to server via UDP: {0}", arg));
 				}*/
 			}
+			private void EndSend(IAsyncResult result)
+            {
+				socket.EndSend(result);
+            }
 			private void ReceiveCallback(IAsyncResult result)
 			{
 				//try {

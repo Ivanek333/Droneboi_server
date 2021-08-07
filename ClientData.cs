@@ -39,6 +39,11 @@ namespace Droneboi_Server
 			packet.WriteLength();
 			tcp.SendData(packet);
 		}
+		public void SendUDP(Packet packet)
+        {
+			packet.WriteLength();
+			Server.instance.udp.SendData(packet, IPpoint);
+        }
 		public class TCP
 		{
 			public TCP(int _id)

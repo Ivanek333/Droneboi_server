@@ -9,12 +9,12 @@ namespace Droneboi_Server
 		/*
 		1 - welcomeReceived
 		2 - spawnMyVehicle
-		3 - removeMyVehicle
-		4 - updateMyVehicle
-		5 - fireMyVehicleWeapon,
+		*3 - removeMyVehicle
+		*4 - updateMyVehicle
+		*5 - fireMyVehicleWeapon,
 		6 - sendChat
 		 */
-		public static void ReceiveWelcome(int id, Packet packet)
+		public static void ReceiveWelcome(int id, Packet packet) //1
 		{
 			ClientData client = ClientData.clients[ClientData.FindById(id)];
 
@@ -35,14 +35,14 @@ namespace Droneboi_Server
 			ServerSend.SendMessage(id, username + " connected to the server");
 		}
 
-		public static void ReceiveSpawnVehicle(int id, Packet packet)
+		public static void ReceiveSpawnVehicle(int id, Packet packet) //2
 		{
 			ClientData client = ClientData.clients[ClientData.FindById(id)];
 			string vehicleKey = packet.ReadString();
 			client.vehicleKey = vehicleKey;
 			ServerSend.SendMessage(id, client.username + " wants to spawn vehicle");
 		}
-		public static void ReceiveMessage(int id, Packet packet)
+		public static void ReceiveMessage(int id, Packet packet) //6
 		{
 			ClientData client = ClientData.clients[ClientData.FindById(id)];
 			string message = packet.ReadString();
