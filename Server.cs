@@ -1,5 +1,7 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -9,6 +11,9 @@ namespace Droneboi_Server
 {
 	public class Server
 	{
+		public const string path = "";
+		public static Database data;
+		public static int id_counter;
 		public static List<string> versions = new List<string>
 		{
 			"0.40", "0.41", "0.41.1"
@@ -73,7 +78,7 @@ namespace Droneboi_Server
 				Debug.Log(DateTime.Now.ToLongTimeString() + " - " + client.Client.RemoteEndPoint.ToString() + " connected");
 				Debug.Log("TcpListener: I think it's a new player");
 				int id = ClientData.clients.Count;
-				ClientData.clients.Add(new ClientData
+				ClientData.clients.Add(id, new ClientData
 				{
 					id = id,
 					IPpoint = ((IPEndPoint)client.Client.RemoteEndPoint),
@@ -194,5 +199,49 @@ namespace Droneboi_Server
 				}
 			};
 		}
+
+		public static void KickPlayer(int id, string reason, bool ban = false)
+		{
+			ClientData client = ClientData.clients[id];
+			if (ban)
+			{
+				ServerSend.SendAllServerMessage($"{client.username} was banned for a reason:\n{reason}");
+				data.ban_list.Add(new Database.Ban
+				{
+					username = client.username,
+					userId = client.userId,
+					reason = reason
+				});
+			}
+            else
+            {
+				ServerSend.SendAllServerMessage($"{client.username} was kicked for a reason:\n{reason}");
+			}
+			ServerSend.SendKickPlayer(id, 1, reason);
+			client.Disconnect(true);
+        }
+
+		public static void LoadData()
+        {
+			if (!File.Exists(path + "Database.json"))
+			{
+				File.Create(path + "Database.json").Close();
+				SaveData();
+			}
+			else
+				JsonConvert.PopulateObject(File.ReadAllText(path + "Database.json"), Server.data);
+		}
+		public static void SaveData()
+        {
+			File.WriteAllText(path + "Database.json", JsonConvert.SerializeObject(Server.data));
+		}
+
+		public static int IsBanned(string username, string userId)
+        {
+			for (int i = 0; i < data.ban_list.Count; i++)
+				if (data.ban_list[i].userId == userId || data.ban_list[i].username == username)
+					return i;
+			return -1;
+        }
 	}
 }

@@ -27,10 +27,10 @@ namespace Droneboi_Server
 		/*
         1 - ClientHandle.Welcome
 		2 - ClientHandle.InitPlayer
-	    *3 - ClientHandle.RemovePlayer
-	    *4 - ClientHandle.Kick
-	    *5 - ClientHandle.SpawnAVehicle
-	    *6 - ClientHandle.RemoveAVehicle
+	    3 - ClientHandle.RemovePlayer
+	    4 - ClientHandle.Kick
+	    5 - ClientHandle.SpawnAVehicle
+	    6 - ClientHandle.RemoveAVehicle
 	    *7 - ClientHandle.UpdateAVehicle
 	    *8 - ClientHandle.FireAVehicleWeapon
 	    9 - ClientHandle.ReceiveChat
@@ -46,27 +46,26 @@ namespace Droneboi_Server
 				}
 				sendPacket.Write(id);
 				sendPacket.Write(1);
-				ClientData.clients[ClientData.FindById(id)].SendTCP(sendPacket);
+				ClientData.clients[id].SendTCP(sendPacket);
 			}
 		}
-
 		public static void SendInitPlayer(int id) //2
 		{
-			ClientData newClient = ClientData.clients[ClientData.FindById(id)];
-			foreach (ClientData client in ClientData.clients)
+			ClientData newClient = ClientData.clients[id];
+			foreach (var client in ClientData.clients)
 			{
 				using (Packet packet = new Packet(2))
 				{
-					packet.Write(client.id);
-					packet.Write(client.username);
+					packet.Write(client.Value.id);
+					packet.Write(client.Value.username);
 					packet.Write(false);
 					packet.Write(false);
 					packet.Write(false);
-					packet.Write(client.premium);
+					packet.Write(client.Value.premium);
 					newClient.SendTCP(packet);
 				}
 			}
-			foreach (ClientData client in ClientData.clients)
+			foreach (var client in ClientData.clients)
 			{
 				using (Packet sendPacket = new Packet(2))
 				{
@@ -76,13 +75,50 @@ namespace Droneboi_Server
 					sendPacket.Write(false);
 					sendPacket.Write(false);
 					sendPacket.Write(newClient.premium);
-					client.SendTCP(sendPacket);
+					client.Value.SendTCP(sendPacket);
 				}
 			}
 		}
+		public static void SendRemovePlayer(int id) //3
+		{
+			foreach (var client in ClientData.clients)
+				using (Packet sendPacket = new Packet(3))
+				{
+					sendPacket.Write(id);
+					client.Value.SendTCP(sendPacket);
+				}
+		}
+		public static void SendKickPlayer(int id, int standart, string custom) //4
+		{
+			using (Packet sendPacket = new Packet(4))
+			{
+				sendPacket.Write(standart);
+				sendPacket.Write(custom);
+				ClientData.clients[id].SendTCP(sendPacket);
+			}
+		}
+		public static void SendSpawnVehicle(int id, string veh_key) //5
+		{
+			foreach (var client in ClientData.clients)
+				using (Packet sendPacket = new Packet(5))
+				{
+					sendPacket.Write(id);
+					sendPacket.Write(veh_key);
+					client.Value.SendTCP(sendPacket);
+				}
+		}
+		public static void SendRemoveVehicle(int id) //6
+		{
+			foreach (var client in ClientData.clients)
+				using (Packet sendPacket = new Packet(6))
+				{
+					sendPacket.Write(id);
+					client.Value.SendTCP(sendPacket);
+				}
+		}
 		public static void SendMessage(int fromId, string rawmessage) //9
 		{
-			ClientData fromClient = ClientData.clients[ClientData.FindById(fromId)];
+			ClientData fromClient = ClientData.clients[fromId];
 			string message = rawmessage;
 			if (fromClient.premium)
 			{
@@ -90,7 +126,7 @@ namespace Droneboi_Server
 				rawmessage = supporterPrefix + rawmessage;
 			}
 			message = ColorNicks(message);
-			foreach (ClientData client in ClientData.clients)
+			foreach (var client in ClientData.clients)
 			{
 
 				using (Packet sendPacket = new Packet(9))
@@ -98,16 +134,17 @@ namespace Droneboi_Server
 					sendPacket.Write(fromId);
 					sendPacket.Write(message);
 					sendPacket.Write(rawmessage);
-					client.SendTCP(sendPacket);
+					client.Value.SendTCP(sendPacket);
 				}
 			}
 		}
-		public static void SendServerMessage(int fromId, string rawmessage)
+		public static void SendServerMessage(int fromId, string rawmessage) //9*
 		{
-			ClientData fromClient = ClientData.clients[ClientData.FindById(fromId)];
+			ClientData fromClient = ClientData.clients[fromId];
 			string message = rawmessage;
-			message = ColorString(actionColor, serverPrefix) + " : " + message;
-			rawmessage = serverPrefix + " : " + rawmessage;
+			message = ColorString(actionColor, serverPrefix) + ": " + message;
+			rawmessage = serverPrefix + ": " + rawmessage;
+			message = ColorNicks(message);
 			using (Packet sendPacket = new Packet(9))
 			{
 				sendPacket.Write(fromId);
@@ -116,6 +153,23 @@ namespace Droneboi_Server
 				fromClient.SendTCP(sendPacket);
 			}
 		}
+		public static void SendAllServerMessage(string rawmessage) //9**
+		{
+			string message = rawmessage;
+			message = ColorString(actionColor, serverPrefix) + ": " + message;
+			rawmessage = serverPrefix + ": " + rawmessage;
+			message = ColorNicks(message);
+			foreach (var client in ClientData.clients)
+				using (Packet sendPacket = new Packet(9))
+				{
+					sendPacket.Write(client.Value.id);
+					sendPacket.Write(message);
+					sendPacket.Write(rawmessage);
+					client.Value.SendTCP(sendPacket);
+				}
+		}
+
+		#region colors
 		public static string ColorString(string color, string orig)
         {
 			return "<color=" + color +">" + orig + "</color>";
@@ -136,26 +190,28 @@ namespace Droneboi_Server
 		public static string ColorNicks(string orig)
         {
 			string ret = orig;
-			foreach (ClientData client in ClientData.clients)
+			foreach (var client in ClientData.clients)
 			{
-				if (client.team != Team.None)
-					switch (client.team)
+				if (client.Value.team != Team.None)
+					switch (client.Value.team)
 					{
 						case Team.Green:
-							ret = ReplaceAll(ret, client.username, ColorString(greenColor, client.username));
+							ret = ReplaceAll(ret, client.Value.username, ColorString(greenColor, client.Value.username));
 							break;
 						case Team.Red:
-							ret = ReplaceAll(ret, client.username, ColorString(redColor, client.username));
+							ret = ReplaceAll(ret, client.Value.username, ColorString(redColor, client.Value.username));
 							break;
 						case Team.Blue:
-							ret = ReplaceAll(ret, client.username, ColorString(blueColor, client.username));
+							ret = ReplaceAll(ret, client.Value.username, ColorString(blueColor, client.Value.username));
 							break;
 						case Team.Yellow:
-							ret = ReplaceAll(ret, client.username, ColorString(yellowColor, client.username));
+							ret = ReplaceAll(ret, client.Value.username, ColorString(yellowColor, client.Value.username));
 							break;
 					}
 			}
 			return ret;
         }
+
+		#endregion
 	}
 }

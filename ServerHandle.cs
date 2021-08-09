@@ -9,14 +9,14 @@ namespace Droneboi_Server
 		/*
 		1 - welcomeReceived
 		2 - spawnMyVehicle
-		*3 - removeMyVehicle
+		3 - removeMyVehicle
 		*4 - updateMyVehicle
 		*5 - fireMyVehicleWeapon,
 		6 - sendChat
 		 */
 		public static void ReceiveWelcome(int id, Packet packet) //1
 		{
-			ClientData client = ClientData.clients[ClientData.FindById(id)];
+			ClientData client = ClientData.clients[id];
 
 			int checkId = packet.ReadInt();
 			string username = packet.ReadString();
@@ -32,19 +32,33 @@ namespace Droneboi_Server
 			client.username = username;
 			client.premium = premium;
 
+			int banned = Server.IsBanned(username, userId);
+			if (banned != -1)
+			{
+				ServerSend.SendKickPlayer(id, 1, Server.data.ban_list[banned].reason);
+				client.Disconnect(true);
+				return;
+            }
+
 			ServerSend.SendMessage(id, username + " connected to the server");
 		}
-
 		public static void ReceiveSpawnVehicle(int id, Packet packet) //2
 		{
-			ClientData client = ClientData.clients[ClientData.FindById(id)];
+			ClientData client = ClientData.clients[id];
 			string vehicleKey = packet.ReadString();
 			client.vehicleKey = vehicleKey;
-			ServerSend.SendMessage(id, client.username + " wants to spawn vehicle");
+			ServerSend.SendAllServerMessage(client.username + " wants to spawn vehicle");
+			ServerSend.SendSpawnVehicle(id, vehicleKey);
+		}
+		public static void ReceiveRemoveVehicle(int id, Packet packet) //2
+		{
+			ClientData client = ClientData.clients[id];
+			ServerSend.SendAllServerMessage(client.username + " wants to remove vehicle");
+			ServerSend.SendRemoveVehicle(id);
 		}
 		public static void ReceiveMessage(int id, Packet packet) //6
 		{
-			ClientData client = ClientData.clients[ClientData.FindById(id)];
+			ClientData client = ClientData.clients[id];
 			string message = packet.ReadString();
 			if (message.StartsWith("/"))
             {

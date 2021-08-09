@@ -8,20 +8,19 @@ namespace Droneboi_Server
 {
 	public class ClientData
 	{
-		public static List<ClientData> clients;
-
-		public static int FindById(int id)
-		{
-			for (int i = 0; i < ClientData.clients.Count; i++)
-				if (ClientData.clients[i] != null && ClientData.clients[i].id == id)
-					return i;
-			return -1;
-		}
+		public static Dictionary<int, ClientData> clients;
 		public static int FindByIpPoint(IPEndPoint _point)
 		{
-			for (int i = 0; i < ClientData.clients.Count; i++)
-				if (ClientData.clients[i] != null && ClientData.clients[i].IPpoint.Address == _point.Address && ClientData.clients[i].IPpoint.Port == _point.Port)
-					return i;
+			foreach (var client in ClientData.clients)
+				if (client.Value != null && client.Value.IPpoint.Address == _point.Address && client.Value.IPpoint.Port == _point.Port)
+					return client.Key;
+			return -1;
+		}
+		public static int FindByUsername(string name)
+		{
+			foreach (var client in ClientData.clients)
+				if (client.Value != null && client.Value.username == name)
+					return client.Key;
 			return -1;
 		}
 
@@ -44,14 +43,28 @@ namespace Droneboi_Server
 			packet.WriteLength();
 			Server.instance.udp.SendData(packet, IPpoint);
         }
+		public void Disconnect(bool kick = false)
+		{
+			Debug.Log("Client[" + id.ToString() + "]: Disconnecting...");
+			tcp.socket.Close();
+			tcp.stream.Close();
+			tcp.stream = null;
+			tcp.socket = null;
+			tcp = null;
+			if (!kick)
+				ServerSend.SendMessage(id, username + " left the game");
+			ServerSend.SendRemovePlayer(id);
+			ClientData.clients.Remove(id);
+        }
+
 		public class TCP
 		{
-			public TCP(int _id)
+			public TCP(int id)
 			{
-				id = _id;
+				client = ClientData.clients[id];
 			}
 
-			public int id;
+			public ClientData client;
 			public TcpClient socket;
 			public NetworkStream stream;
 			private Packet receivedData;
@@ -65,48 +78,50 @@ namespace Droneboi_Server
 				{
 					stream = socket.GetStream();
 					receivedData = new Packet();
-					Debug.Log("TcpClient[" + id.ToString() + "]: Connected succesfully");
+					Debug.Log("TcpClient[" + client.id.ToString() + "]: Connected succesfully");
 					stream.BeginRead(receiveBuffer, 0, Server.dataBufferSize, ReceiveCallback, null);
 				}
 			}
 
 			public void SendData(Packet packet)
 			{
-				//try {
-				if (socket != null)
+				try
 				{
-					stream.BeginWrite(packet.ToArray(), 0, packet.Length(), null, null);
-					Debug.Log($"TcpClient[{id.ToString()}] ({ClientData.clients[id].username}): Sent message");
+					if (socket != null)
+					{
+						stream.BeginWrite(packet.ToArray(), 0, packet.Length(), null, null);
+						Debug.Log($"TcpClient[{client.id.ToString()}] ({client.username}): Sent message");
+					}
 				}
-				/*}
 				catch (Exception arg)
 				{
-					//Debug.Log($"Error sending data to server via TCP: {arg}");
-				}*/
+					Debug.Log($"Error sending data to server via TCP: {arg}");
+				}
 			}
 
 			private void ReceiveCallback(IAsyncResult result)
 			{
-				//try {
-				int num = stream.EndRead(result);
-				Debug.Log("TcpClient[" + id.ToString() + "]: Got new message");
-				if (num <= 0)
+				try
 				{
-					Debug.Log("TcpClient[" + id.ToString() + "]: I should disconnect");
-					//instance.Disconnect();
-					return;
+					int num = stream.EndRead(result);
+					Debug.Log("TcpClient[" + client.id.ToString() + "]: Got new message");
+					if (num <= 0)
+					{
+						Debug.Log("TcpClient[" + client.id.ToString() + "]: I should disconnect");
+						client.Disconnect();
+						return;
+					}
+					byte[] array = new byte[num];
+					Array.Copy(receiveBuffer, array, num);
+					Debug.Log("TcpClient[" + client.id.ToString() + "]: " + Encoding.UTF8.GetString(array));
+					receivedData.Reset(HandleData(array));
+					stream.BeginRead(receiveBuffer, 0, Server.dataBufferSize, ReceiveCallback, null);
 				}
-				byte[] array = new byte[num];
-				Array.Copy(receiveBuffer, array, num);
-				Debug.Log("TcpClient[" + id.ToString() + "]: " + Encoding.UTF8.GetString(array));
-				receivedData.Reset(HandleData(array));
-				stream.BeginRead(receiveBuffer, 0, Server.dataBufferSize, ReceiveCallback, null);
-				/*}
 				catch (Exception arg)
 				{
 					Debug.Log($"Error receiving TCP data: {arg}");
-					Disconnect();
-				}*/
+					client.Disconnect();
+				}
 			}
 
 			private bool HandleData(byte[] data)
@@ -124,16 +139,9 @@ namespace Droneboi_Server
 				while (num > 0 && num <= receivedData.UnreadLength())
 				{
 					byte[] _packetBytes = receivedData.ReadBytes(num);
-					/*ThreadManager.ExecuteOnMainThread(delegate
-					{
-						using Packet packet = new Packet(_packetBytes);
-						int key = packet.ReadInt();
-						packetHandlers[key](packet);
-					});*/
-
 					using Packet packet = new Packet(_packetBytes);
 					int key = packet.ReadInt();
-					Server.packetHandlers[key](id, packet);
+					Server.packetHandlers[key](client.id, packet);
 
 					num = 0;
 					if (receivedData.UnreadLength() >= 4)
@@ -150,15 +158,6 @@ namespace Droneboi_Server
 					return true;
 				}
 				return false;
-			}
-
-			private void Disconnect()
-			{
-				//instance.Disconnect();
-				stream = null;
-				receivedData = null;
-				receiveBuffer = null;
-				socket = null;
 			}
 		}
 	}
