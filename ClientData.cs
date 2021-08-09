@@ -46,24 +46,27 @@ namespace Droneboi_Server
 		public void Disconnect(bool kick = false)
 		{
 			Debug.Log("Client[" + id.ToString() + "]: Disconnecting...");
+			if (!kick)
+			{
+				ServerSend.SendMessage(id, username + " left the game");
+			}
+			ServerSend.SendRemovePlayer(id);
 			tcp.socket.Close();
 			tcp.stream.Close();
 			tcp.stream = null;
 			tcp.socket = null;
 			tcp = null;
-			if (!kick)
-				ServerSend.SendMessage(id, username + " left the game");
-			ServerSend.SendRemovePlayer(id);
 			ClientData.clients.Remove(id);
         }
 
 		public class TCP
 		{
-			public TCP(int id)
+			public TCP(int _id)
 			{
-				client = ClientData.clients[id];
+				id = _id; 
 			}
 
+			public int id;
 			public ClientData client;
 			public TcpClient socket;
 			public NetworkStream stream;
@@ -72,6 +75,7 @@ namespace Droneboi_Server
 
 			public void Connect(TcpClient _socket)
 			{
+				client = ClientData.clients[id];
 				socket = _socket;
 				receiveBuffer = new byte[Server.dataBufferSize];
 				if (socket.Connected)

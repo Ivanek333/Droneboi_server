@@ -36,6 +36,7 @@ namespace Droneboi_Server
 		public Server()
 		{
 			Server.instance = this;
+			id_counter = 0;
 			localPoint = new IPEndPoint(IPAddress.Parse(localIP), localPort);
 			InitServerData();
 			tcp = new TCP();
@@ -77,7 +78,8 @@ namespace Droneboi_Server
 				listener.BeginAcceptTcpClient(AcceptCallback, listener);
 				Debug.Log(DateTime.Now.ToLongTimeString() + " - " + client.Client.RemoteEndPoint.ToString() + " connected");
 				Debug.Log("TcpListener: I think it's a new player");
-				int id = ClientData.clients.Count;
+				int id = id_counter;
+				id_counter++;
 				ClientData.clients.Add(id, new ClientData
 				{
 					id = id,
@@ -212,12 +214,13 @@ namespace Droneboi_Server
 					userId = client.userId,
 					reason = reason
 				});
+				ServerSend.SendKickPlayer(id, 1, reason);
 			}
             else
             {
 				ServerSend.SendAllServerMessage($"{client.username} was kicked for a reason:\n{reason}");
+				ServerSend.SendKickPlayer(id, 0, reason);
 			}
-			ServerSend.SendKickPlayer(id, 1, reason);
 			client.Disconnect(true);
         }
 
