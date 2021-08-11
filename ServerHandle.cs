@@ -60,6 +60,7 @@ namespace Droneboi_Server
 		{
 			ClientData client = ClientData.clients[id];
 			string message = packet.ReadString();
+			Debug.Log($"Client[{id}] ({client.username}): {message}");
 			if (message.StartsWith("/"))
             {
 				message = message.Remove(0, 1);

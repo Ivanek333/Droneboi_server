@@ -207,18 +207,19 @@ namespace Droneboi_Server
 			ClientData client = ClientData.clients[id];
 			if (ban)
 			{
-				ServerSend.SendAllServerMessage($"{client.username} was banned for a reason:\n{reason}");
+				ServerSend.SendAllServerMessage($"{client.username} was banned\nReason: {reason}");
 				data.ban_list.Add(new Database.Ban
 				{
 					username = client.username,
 					userId = client.userId,
 					reason = reason
 				});
+				SaveData();
 				ServerSend.SendKickPlayer(id, 1, reason);
 			}
             else
             {
-				ServerSend.SendAllServerMessage($"{client.username} was kicked for a reason:\n{reason}");
+				ServerSend.SendAllServerMessage($"{client.username} was kicked\nReason: {reason}");
 				ServerSend.SendKickPlayer(id, 0, reason);
 			}
 			client.Disconnect(true);

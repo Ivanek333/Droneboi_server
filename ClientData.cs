@@ -32,31 +32,48 @@ namespace Droneboi_Server
 		public bool premium;
 		public TCP tcp;
 		public Team team;
+		public bool isConnected;
 
 		public void SendTCP(Packet packet)
 		{
-			packet.WriteLength();
-			tcp.SendData(packet);
+			try
+			{
+				packet.WriteLength();
+				tcp.SendData(packet);
+			}
+			catch (Exception e)
+            {
+				Debug.Log("Client[" + id.ToString() + "] SendTCP error: " + e.Message);
+            }
 		}
 		public void SendUDP(Packet packet)
-        {
-			packet.WriteLength();
-			Server.instance.udp.SendData(packet, IPpoint);
-        }
+		{
+			try
+			{
+				packet.WriteLength();
+				Server.instance.udp.SendData(packet, IPpoint);
+			}
+			catch (Exception e)
+			{
+				Debug.Log("Client[" + id.ToString() + "] SendUDP error" + e.Message);
+			}
+		}
 		public void Disconnect(bool kick = false)
 		{
+			isConnected = false;
 			Debug.Log("Client[" + id.ToString() + "]: Disconnecting...");
-			if (!kick)
-			{
-				ServerSend.SendMessage(id, username + " left the game");
-			}
-			ServerSend.SendRemovePlayer(id);
-			tcp.socket.Close();
 			tcp.stream.Close();
+			tcp.socket.Close();
 			tcp.stream = null;
 			tcp.socket = null;
 			tcp = null;
 			ClientData.clients.Remove(id);
+			if (!kick)
+			{
+				Debug.Log("Client[" + id.ToString() + "]: Not Kick...");
+				ServerSend.SendMessage(id, username + " left the game");
+			}
+			ServerSend.SendRemovePlayer(id);
         }
 
 		public class TCP
@@ -76,6 +93,7 @@ namespace Droneboi_Server
 			public void Connect(TcpClient _socket)
 			{
 				client = ClientData.clients[id];
+				client.isConnected = true;
 				socket = _socket;
 				receiveBuffer = new byte[Server.dataBufferSize];
 				if (socket.Connected)
@@ -112,7 +130,8 @@ namespace Droneboi_Server
 					if (num <= 0)
 					{
 						Debug.Log("TcpClient[" + client.id.ToString() + "]: I should disconnect");
-						client.Disconnect();
+						if (client.isConnected)
+							client.Disconnect();
 						return;
 					}
 					byte[] array = new byte[num];
@@ -123,8 +142,9 @@ namespace Droneboi_Server
 				}
 				catch (Exception arg)
 				{
-					Debug.Log($"Error receiving TCP data: {arg}");
-					client.Disconnect();
+					Debug.Log($"Error receiving TCP data: {arg.Message}");
+					if (client.isConnected)
+						client.Disconnect();
 				}
 			}
 

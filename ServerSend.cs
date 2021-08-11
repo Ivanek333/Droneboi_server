@@ -134,7 +134,8 @@ namespace Droneboi_Server
 					sendPacket.Write(fromId);
 					sendPacket.Write(message);
 					sendPacket.Write(rawmessage);
-					client.Value.SendTCP(sendPacket);
+					if (client.Value != null)
+						client.Value.SendTCP(sendPacket);
 				}
 			}
 		}
