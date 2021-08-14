@@ -131,30 +131,24 @@ namespace Droneboi_Server
             }
 			private void ReceiveCallback(IAsyncResult result)
 			{
-				//try {
-
-				Debug.Log("UdpListener: new connection from");
-				IPEndPoint point = new IPEndPoint(IPAddress.Any, 0);
-				byte[] array = socket.EndReceive(result, ref point);
-				Debug.Log("UdpListener: new connection from");
-				Debug.Log(point.ToString());
-				socket.BeginReceive(new AsyncCallback(ReceiveCallback), null);
-				if (array.Length < 4)
+				try
 				{
-					Debug.Log("UdpListener: i should disconnect");
-					//Server.instance.Disconnect(false);
+					IPEndPoint point = new IPEndPoint(IPAddress.Any, 0);
+					byte[] array = socket.EndReceive(result, ref point);
+					socket.BeginReceive(new AsyncCallback(ReceiveCallback), null);
+					if (array.Length < 4)
+					{
+						Debug.Log("UdpListener: i should disconnect");
+					}
+					else
+					{
+						HandleData(array);
+					}
 				}
-				else
+				catch (Exception e)
 				{
-					Debug.Log("UdpListener: new message");
-					HandleData(array);
+					Debug.Log(e.Message);
 				}
-
-				/*}
-				catch
-				{
-					//this.Disconnect();
-				}*/
 			}
 
 			private void HandleData(byte[] _data)
@@ -165,24 +159,10 @@ namespace Droneboi_Server
 				{
 					int length = packet.ReadInt();
 					_data = packet.ReadBytes(length);
-
-					/*ThreadManager.ExecuteOnMainThread(delegate
-					{
-						using Packet packet2 = new Packet(_data);
-						int key = packet2.ReadInt();
-						packetHandlers[key](packet2);
-					});*/
-
 					using Packet packet2 = new Packet(_data);
 					int key = packet2.ReadInt();
 					Server.packetHandlers[key](id, packet2);
 				}
-			}
-			private void Disconnect()
-			{
-				//Server.instance.Disconnect(false);
-				//endPoint = null;
-				//socket = null;
 			}
 		}
 

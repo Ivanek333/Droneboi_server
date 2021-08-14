@@ -148,7 +148,7 @@ namespace Droneboi_Server
 					for (int i = 0; i < veh.miningLasers.Count; i++)
 						packet.Write(veh.miningLasers[i].drilling);
 				}
-				client.SendUDP(packet);
+				ThreadManager.ExecuteOnMainThread(delegate { client.SendUDP(packet); });
             }
 		}
 		public static void SendFireWeapon(int id, int ind) //8
@@ -158,7 +158,7 @@ namespace Droneboi_Server
 				{
 					sendPacket.Write(id);
 					sendPacket.Write(ind);
-					client.Value.SendUDP(sendPacket);
+					ThreadManager.ExecuteOnMainThread(delegate { client.Value.SendUDP(sendPacket); });
 				}
 		}
 		public static void SendMessage(ClientData fromClient, string rawmessage) //9

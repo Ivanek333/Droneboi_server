@@ -21,6 +21,8 @@ namespace Droneboi_Server
             UdpListenTask.Start();
             Thread UpdateTask = new Thread(new ThreadStart(Server.instance.Update));
             UpdateTask.Start();
+            Thread ThreadTask = new Thread(new ThreadStart(ThreadManager.Update));
+            ThreadTask.Start();
             while (true)
             {
                 string text = Console.ReadLine().Trim();
