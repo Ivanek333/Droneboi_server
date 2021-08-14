@@ -32,7 +32,7 @@ namespace Droneboi_Server
 	    5 - ClientHandle.SpawnAVehicle
 	    6 - ClientHandle.RemoveAVehicle
 	    *7 - ClientHandle.UpdateAVehicle
-	    *8 - ClientHandle.FireAVehicleWeapon
+	    8 - ClientHandle.FireAVehicleWeapon
 	    9 - ClientHandle.ReceiveChat
         */
 		public static void SendWelcome(int id) //1
@@ -64,9 +64,6 @@ namespace Droneboi_Server
 					packet.Write(client.Value.premium);
 					newClient.SendTCP(packet);
 				}
-			}
-			foreach (var client in ClientData.clients)
-			{
 				using (Packet sendPacket = new Packet(2))
 				{
 					sendPacket.Write(id);
@@ -116,9 +113,56 @@ namespace Droneboi_Server
 					client.Value.SendTCP(sendPacket);
 				}
 		}
-		public static void SendMessage(int fromId, string rawmessage) //9
+		public static void SendUpdateVehicle(int id, int updId) //7
 		{
-			ClientData fromClient = ClientData.clients[fromId];
+			if (id == updId) return;
+			ClientData client = ClientData.clients[id];
+			ClientData updClient = ClientData.clients[updId];
+			using (Packet packet = new Packet(7))
+            {
+				lock (updClient.veh)
+				{
+					Vehicle veh = updClient.veh;
+					packet.Write(updId);
+					packet.Write(veh.parts.Count);
+					for (int i = 0; i < veh.parts.Count; i++)
+					{
+						packet.Write(veh.parts[i].position);
+						packet.Write(veh.parts[i].eulerAnglesZ);
+						packet.Write(veh.parts[i].velocity);
+						packet.Write(veh.parts[i].angularVelocity);
+					}
+					packet.Write(veh.thrusters.Count);
+					for (int i = 0; i < veh.thrusters.Count; i++)
+						packet.Write(veh.thrusters[i].isPlaying);
+					packet.Write(veh.momentumWheels.Count);
+					for (int i = 0; i < veh.momentumWheels.Count; i++)
+						packet.Write(veh.momentumWheels[i].isPlaying);
+					packet.Write(veh.connectors.Count);
+					for (int i = 0; i < veh.connectors.Count; i++)
+						packet.Write(veh.connectors[i].powered);
+					packet.Write(veh.solarPanels.Count);
+					for (int i = 0; i < veh.solarPanels.Count; i++)
+						packet.Write(veh.solarPanels[i].charging);
+					packet.Write(veh.miningLasers.Count);
+					for (int i = 0; i < veh.miningLasers.Count; i++)
+						packet.Write(veh.miningLasers[i].drilling);
+				}
+				client.SendUDP(packet);
+            }
+		}
+		public static void SendFireWeapon(int id, int ind) //8
+		{
+			foreach (var client in ClientData.clients)
+				using (Packet sendPacket = new Packet(8))
+				{
+					sendPacket.Write(id);
+					sendPacket.Write(ind);
+					client.Value.SendUDP(sendPacket);
+				}
+		}
+		public static void SendMessage(ClientData fromClient, string rawmessage) //9
+		{
 			string message = rawmessage;
 			if (fromClient.premium)
 			{
@@ -131,7 +175,7 @@ namespace Droneboi_Server
 
 				using (Packet sendPacket = new Packet(9))
 				{
-					sendPacket.Write(fromId);
+					sendPacket.Write(fromClient.id);
 					sendPacket.Write(message);
 					sendPacket.Write(rawmessage);
 					if (client.Value != null)

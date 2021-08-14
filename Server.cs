@@ -11,6 +11,9 @@ namespace Droneboi_Server
 {
 	public class Server
 	{
+		public const float tickDelay = 0.1f;
+		float deltatime;
+		float lasttime;
 		public const string path = "";
 		public static Database data;
 		public static int id_counter;
@@ -85,7 +88,8 @@ namespace Droneboi_Server
 					id = id,
 					IPpoint = ((IPEndPoint)client.Client.RemoteEndPoint),
 					tcp = new ClientData.TCP(id),
-					team = Team.None
+					team = Team.None,
+					veh = new Vehicle()
 				});
 				Debug.Log("TcpListener: New player was added with id " + id.ToString());
 				ClientData.clients[id].tcp.Connect(client);
@@ -108,17 +112,18 @@ namespace Droneboi_Server
 
 			public void SendData(Packet packet, IPEndPoint point)
 			{
-				//try
-				//{
-				if (socket != null)
+				try
 				{
-					socket.Connect(point);
-					socket.BeginSend(packet.ToArray(), packet.Length(), EndSend, null);
+					if (socket != null)
+					{
+						socket.Connect(point);
+						socket.BeginSend(packet.ToArray(), packet.Length(), EndSend, null);
+					}
 				}
-				/*catch (Exception arg)
+				catch (Exception arg)
 				{
 					Debug.Log(string.Format("Error sending data to server via UDP: {0}", arg));
-				}*/
+				}
 			}
 			private void EndSend(IAsyncResult result)
             {
@@ -196,11 +201,48 @@ namespace Droneboi_Server
 					ServerHandle.ReceiveSpawnVehicle
 				},
 				{
+					3,
+					ServerHandle.ReceiveRemoveVehicle
+				},
+				{
+					4,
+					ServerHandle.ReceiveUpdateVehicle
+				},
+				{
+					5,
+					ServerHandle.ReceiveFireWeapon
+				},
+				{
 					6,
 					ServerHandle.ReceiveMessage
 				}
 			};
 		}
+
+		public void Update()
+        {
+            while (true)
+            {
+				float curtime = DateTime.Now.Second + DateTime.Now.Millisecond / 1000f;
+				float t = curtime - lasttime;
+				lasttime = curtime;
+				if (t < 0) t += 60;
+				deltatime += t;
+				if (deltatime > tickDelay)
+                {
+					deltatime -= tickDelay;
+					Tick();
+                }
+            }
+        }
+		public void Tick()
+        {
+			foreach (var client in ClientData.clients)
+				if (client.Value.isConnected && client.Value.isPlaying)
+					foreach (var updClient in ClientData.clients)
+						if (updClient.Value.isConnected && updClient.Value.isPlaying)
+							ServerSend.SendUpdateVehicle(client.Value.id, updClient.Value.id);
+        }
 
 		public static void KickPlayer(int id, string reason, bool ban = false)
 		{

@@ -4,6 +4,34 @@ using System.Text;
 
 namespace Droneboi_Server
 {
+    public class Vehicle
+    {
+        public string veh_key;
+        public List<Part> parts;
+        public List<Block> thrusters, momentumWheels, connectors, solarPanels, miningLasers;
+
+        public Vehicle()
+        {
+            parts = new List<Part>();
+            thrusters = new List<Block>();
+            momentumWheels = new List<Block>();
+            connectors = new List<Block>();
+            solarPanels = new List<Block>();
+            miningLasers = new List<Block>();
+        }
+    }
+    public class Part
+    {
+        public Vector2 position;
+        public float eulerAnglesZ;
+        public Vector2 velocity;
+        public float angularVelocity;
+    }
+    public class Block
+    {
+        public int health;
+        public bool isPlaying, powered, charging, drilling;
+    }
     public enum Team
     {
         Green,

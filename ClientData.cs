@@ -25,7 +25,7 @@ namespace Droneboi_Server
 		}
 
 		public int id;
-		public string vehicleKey;
+		public Vehicle veh;
 		public string username;
 		public string userId;
 		public IPEndPoint IPpoint;
@@ -33,6 +33,7 @@ namespace Droneboi_Server
 		public TCP tcp;
 		public Team team;
 		public bool isConnected;
+		public bool isPlaying;
 
 		public void SendTCP(Packet packet)
 		{
@@ -71,8 +72,10 @@ namespace Droneboi_Server
 			if (!kick)
 			{
 				Debug.Log("Client[" + id.ToString() + "]: Not Kick...");
-				ServerSend.SendMessage(id, username + " left the game");
+				ServerSend.SendMessage(this, username + " left the game");
 			}
+			if (isPlaying)
+				ServerSend.SendRemoveVehicle(id);
 			ServerSend.SendRemovePlayer(id);
         }
 
